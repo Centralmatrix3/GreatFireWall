@@ -1,0 +1,51 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    env:
+      TZ: "Asia/Shanghai"
+
+    steps:
+      - name: 检查仓库
+        uses: actions/checkout@v4
+
+      - name: 安装依赖
+        run: sudo apt-get update && sudo apt-get install -y curl
+
+      - name: 下载解码
+        run: |
+          curl -sSL "https://raw.githubusercontent.com/gfwlist/gfwlist/master/gfwlist.txt" -o gfwlist.txt
+          base64 -d gfwlist.txt > GreatFireWall.list
+          echo "Decoding completed and saved as GreatFireWall.list"
+
+      - name: 推送更新
+        run: |
+          git config --local user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --local user.name "${{ github.actor }}"
+          git add GreatFireWall.list
+          if ! git diff --cached --quiet; then
+            git commit -m "$(TZ='Asia/Shanghai' date +'%Y-%m-%d %H:%M:%S')"
+            git push
+          else
+            echo "No changes to commit."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 上传解码
+        uses: actions/upload-artifact@v4
+        with:
+          name: GreatFireWall
+          path: GreatFireWall.list
+
+      - name: 清理日志
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          retain_days: 0
+          keep_minimum_runs: 2
