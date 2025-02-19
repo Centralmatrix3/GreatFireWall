@@ -38,12 +38,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 上传解码
-        uses: actions/upload-artifact@v4
-        with:
-          name: GreatFireWall
-          path: GreatFireWall.list
-
       - name: 清理日志
         uses: Mattraks/delete-workflow-runs@main
         with:
